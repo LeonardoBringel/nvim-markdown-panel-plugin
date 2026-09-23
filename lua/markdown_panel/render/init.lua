@@ -113,6 +113,13 @@ handlers.paragraph = walk_children
 handlers.inline = ignore
 handlers.block_continuation = ignore
 
+-- One module per element; each exports `handlers[node_type]`.
+for _, name in ipairs({ "heading" }) do
+  for node_type, handler in pairs(require("markdown_panel.render." .. name).handlers) do
+    handlers[node_type] = handler
+  end
+end
+
 --- Continuation markers (`> `, list indentation) precede the content of their row,
 --- wherever they appear in the tree.
 ---@param node TSNode
