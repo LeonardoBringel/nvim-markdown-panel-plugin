@@ -266,7 +266,7 @@ function M.render(lines, opts)
   for _, tree in pairs(inline_parser and inline_parser:trees() or {}) do
     inline_trees[#inline_trees + 1] = tree
   end
-  for _, e in ipairs(inline.collect(inline_trees)) do
+  for _, e in ipairs(inline.collect(inline_trees, src)) do
     for r = e.row, e.end_row do
       local bucket = ctx.edits_by_row[r] or {}
       bucket[#bucket + 1] = e
