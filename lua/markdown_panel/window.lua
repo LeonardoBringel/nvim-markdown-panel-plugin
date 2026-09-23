@@ -1,9 +1,3 @@
----@class mdp.Highlight
----@field row integer 0-based output line
----@field col integer 0-based byte, inclusive
----@field end_col integer byte, exclusive; -1 = to end of line
----@field group string
-
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("markdown_panel")
