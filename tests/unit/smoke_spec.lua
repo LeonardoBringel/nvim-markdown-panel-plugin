@@ -1,0 +1,6 @@
+describe("test harness", function()
+  it("runs specs with the repository on the runtimepath", function()
+    local root = vim.fn.getcwd()
+    assert.is_true(vim.tbl_contains(vim.opt.runtimepath:get(), root))
+  end)
+end)
