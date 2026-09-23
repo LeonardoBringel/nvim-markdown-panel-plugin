@@ -61,13 +61,14 @@ function Ctx:row(r)
   return row
 end
 
---- First and last source rows a node covers. A range ending at column 0
---- does not cover its end row.
+--- First and last source rows a node covers. A range that ends inside the
+--- continuation markers of its end row (e.g. `[7,2-8,2]` with `  ` on row 8,
+--- or column 0) does not cover that row. Relies on skip_continuations.
 ---@param node TSNode
 ---@return integer first, integer last
 function Ctx:rows(node)
   local sr, _, er, ec = node:range()
-  if ec == 0 and er > sr then
+  if er > sr and ec <= self:row(er).content_col then
     er = er - 1
   end
   return sr, math.min(er, #self.lines - 1)
@@ -130,7 +131,7 @@ handlers.inline = ignore
 handlers.block_continuation = ignore
 
 -- One module per element; each exports `handlers[node_type]`.
-for _, name in ipairs({ "heading", "list" }) do
+for _, name in ipairs({ "heading", "list", "code" }) do
   for node_type, handler in pairs(require("markdown_panel.render." .. name).handlers) do
     handlers[node_type] = handler
   end
