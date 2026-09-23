@@ -32,6 +32,8 @@
 ---@field verbatim boolean|nil        row is emitted as source text, without inline edits
 ---@field replace {text: string, hl: mdp.LineHighlight[]}[]|nil  output lines replacing the content
 
+local inline = require("markdown_panel.render.inline")
+
 local M = {}
 
 ---@alias mdp.Handler fun(node: TSNode, ctx: mdp.Ctx)
@@ -43,6 +45,7 @@ local handlers = {}
 ---@field lines string[]
 ---@field width integer
 ---@field row_state table<integer, mdp.Row>
+---@field edits_by_row table<integer, mdp.Edit[]>  inline edits touching each source row
 local Ctx = {}
 Ctx.__index = Ctx
 
@@ -201,7 +204,7 @@ local function assemble_row(ctx, r, out)
   if row.content_end then
     line = line:sub(1, row.content_end)
   end
-  local content = line:sub(row.content_col + 1)
+  local content, content_hl = inline.apply(line, r, row.content_col, row.verbatim and {} or ctx.edits_by_row[r] or {})
   local head = prefix .. row.lead
   if content == "" then
     -- Blank content: keep the line blank apart from visible markers (MDP-27).
@@ -213,6 +216,7 @@ local function assemble_row(ctx, r, out)
   for _, h in ipairs(hl) do
     h.end_col = h.end_col == -1 and -1 or math.min(h.end_col, #head)
   end
+  append_shifted(hl, content_hl, #head)
   emit(out, head .. content, hl)
 end
 
@@ -235,7 +239,19 @@ function M.render(lines, opts)
   local parser = vim.treesitter.get_string_parser(src, "markdown")
   local root = parser:parse(true)[1]:root()
 
-  local ctx = setmetatable({ lines = lines, width = opts.width, row_state = {} }, Ctx)
+  local ctx = setmetatable({ lines = lines, width = opts.width, row_state = {}, edits_by_row = {} }, Ctx)
+  local inline_trees = {}
+  local inline_parser = parser:children().markdown_inline -- absent without inline content
+  for _, tree in pairs(inline_parser and inline_parser:trees() or {}) do
+    inline_trees[#inline_trees + 1] = tree
+  end
+  for _, e in ipairs(inline.collect(inline_trees)) do
+    for r = e.row, e.end_row do
+      local bucket = ctx.edits_by_row[r] or {}
+      bucket[#bucket + 1] = e
+      ctx.edits_by_row[r] = bucket
+    end
+  end
   skip_continuations(root, ctx)
   ctx:walk(root)
 
