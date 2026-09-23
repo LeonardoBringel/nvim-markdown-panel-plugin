@@ -137,6 +137,14 @@ function handlers.thematic_break(node, ctx)
   }
 end
 
+-- MDP-38: leading YAML frontmatter is metadata, not content.
+function handlers.minus_metadata(node, ctx)
+  local first, last = ctx:rows(node)
+  for r = first, last do
+    ctx:row(r).drop = true
+  end
+end
+
 -- One module per element; each exports `handlers[node_type]`.
 for _, name in ipairs({ "heading", "list", "code", "quote", "table" }) do
   for node_type, handler in pairs(require("markdown_panel.render." .. name).handlers) do
