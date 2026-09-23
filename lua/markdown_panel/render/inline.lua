@@ -56,9 +56,48 @@ collectors.backslash_escape = function(node, edits)
   edits[#edits + 1] = { kind = "hide", row = sr, col = sc, end_row = sr, end_col = sc + 1 }
 end
 
+local visit
+
+---@param sr integer
+---@param sc integer
+---@param er integer
+---@param ec integer
+---@return mdp.Edit
+local function hide_range(sr, sc, er, ec)
+  return { kind = "hide", row = sr, col = sc, end_row = er, end_col = ec }
+end
+
+-- `[text](dest "title")`: everything but the text is hidden.
+collectors.inline_link = function(node, edits)
+  local sr, sc, er, ec = node:range()
+  for child in node:iter_children() do
+    if child:type() == "link_text" then
+      local tr, tc, ter, tec = child:range()
+      edits[#edits + 1] = hide_range(sr, sc, tr, tc)
+      edits[#edits + 1] = hide_range(ter, tec, er, ec)
+      edits[#edits + 1] = edit("style", child, "MarkdownPanelLink")
+      visit(child, edits)
+      return true
+    end
+  end
+  edits[#edits + 1] = edit("hide", node) -- `[](dest)`: no text to show
+  return true
+end
+
+-- `<https://…>` / `<a@b.c>`: angle brackets hidden.
+local function autolink(node, edits)
+  local sr, sc, er, ec = node:range()
+  edits[#edits + 1] = hide_range(sr, sc, sr, sc + 1)
+  edits[#edits + 1] = hide_range(er, ec - 1, er, ec)
+  edits[#edits + 1] = edit("style", node, "MarkdownPanelLink")
+  return true
+end
+collectors.uri_autolink = autolink
+collectors.email_autolink = autolink
+
 ---@param node TSNode
 ---@param edits mdp.Edit[]
-local function visit(node, edits)
+function visit(node, edits)
   local collector = collectors[node:type()]
   if collector and collector(node, edits) then
     return

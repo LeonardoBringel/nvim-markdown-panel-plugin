@@ -1,0 +1,40 @@
+local h = require("tests.unit.render.helpers")
+local hl = h.hl
+
+describe("render links", function()
+  it("shows only the text of an inline link, with Link (MDP-18)", function()
+    local out = h.render({ "ver [docs](https://x.y) já" })
+    assert.same({ "ver docs já" }, out.lines)
+    assert.same({ hl(0, 4, 8, "Link") }, out.highlights)
+  end)
+
+  it("hides the link title together with the destination (MDP-18)", function()
+    local out = h.render({ "[t](https://x.y \"Title\") end" })
+    assert.same({ "t end" }, out.lines)
+    assert.same({ hl(0, 0, 1, "Link") }, out.highlights)
+  end)
+
+  it("keeps formatting inside the link text (MDP-18, MDP-14)", function()
+    local out = h.render({ "[**b**](u)" })
+    assert.same({ "b" }, out.lines)
+    assert.same({ hl(0, 0, 1, "Bold"), hl(0, 0, 1, "Link") }, out.highlights)
+  end)
+
+  it("clips a link text spanning two lines to each line (MDP-18)", function()
+    local out = h.render({ "see [two", "lines](u) ok" })
+    assert.same({ "see two", "lines ok" }, out.lines)
+    assert.same({ hl(0, 4, 7, "Link"), hl(1, 0, 5, "Link") }, out.highlights)
+  end)
+
+  it("shows a URI autolink without angle brackets, with Link (MDP-19)", function()
+    local out = h.render({ "<https://a.b>" })
+    assert.same({ "https://a.b" }, out.lines)
+    assert.same({ hl(0, 0, 11, "Link") }, out.highlights)
+  end)
+
+  it("shows an email autolink without angle brackets, with Link (MDP-19)", function()
+    local out = h.render({ "mail <a@b.c> now" })
+    assert.same({ "mail a@b.c now" }, out.lines)
+    assert.same({ hl(0, 5, 10, "Link") }, out.highlights)
+  end)
+end)
