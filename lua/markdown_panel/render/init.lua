@@ -138,7 +138,7 @@ function handlers.thematic_break(node, ctx)
 end
 
 -- One module per element; each exports `handlers[node_type]`.
-for _, name in ipairs({ "heading", "list", "code", "quote" }) do
+for _, name in ipairs({ "heading", "list", "code", "quote", "table" }) do
   for node_type, handler in pairs(require("markdown_panel.render." .. name).handlers) do
     handlers[node_type] = handler
   end
