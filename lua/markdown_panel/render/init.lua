@@ -81,6 +81,19 @@ function Ctx:skip_to(r, col)
   row.content_col = math.max(row.content_col, col)
 end
 
+--- Appends a container piece to the prefix of row `r`. A list piece replaces a
+--- trailing list piece: the innermost list item decides the list indentation.
+---@param r integer
+---@param piece mdp.Piece
+function Ctx:add_piece(r, piece)
+  local pieces = self:row(r).pieces
+  if piece.list and #pieces > 0 and pieces[#pieces].list then
+    pieces[#pieces] = piece
+  else
+    pieces[#pieces + 1] = piece
+  end
+end
+
 ---@param node TSNode
 function Ctx:walk(node)
   local handler = handlers[node:type()]
@@ -117,7 +130,7 @@ handlers.inline = ignore
 handlers.block_continuation = ignore
 
 -- One module per element; each exports `handlers[node_type]`.
-for _, name in ipairs({ "heading" }) do
+for _, name in ipairs({ "heading", "list" }) do
   for node_type, handler in pairs(require("markdown_panel.render." .. name).handlers) do
     handlers[node_type] = handler
   end
