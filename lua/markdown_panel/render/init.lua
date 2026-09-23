@@ -130,8 +130,15 @@ handlers.paragraph = walk_children
 handlers.inline = ignore
 handlers.block_continuation = ignore
 
+-- MDP-24: `---`, `***`, `___` become a full-width rule.
+function handlers.thematic_break(node, ctx)
+  ctx:row((node:range())).replace = {
+    { text = string.rep("─", ctx.width), hl = { { col = 0, end_col = -1, group = "MarkdownPanelRule" } } },
+  }
+end
+
 -- One module per element; each exports `handlers[node_type]`.
-for _, name in ipairs({ "heading", "list", "code" }) do
+for _, name in ipairs({ "heading", "list", "code", "quote" }) do
   for node_type, handler in pairs(require("markdown_panel.render." .. name).handlers) do
     handlers[node_type] = handler
   end
