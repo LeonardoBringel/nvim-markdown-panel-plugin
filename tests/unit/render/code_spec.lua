@@ -5,7 +5,15 @@ describe("render code blocks (MDP-22)", function()
   it("drops ``` fences and prefixes content with 2 spaces, with CodeBlock", function()
     local out = h.render({ "```lua", "local x = 1", "```" })
     assert.same({ "  local x = 1" }, out.lines)
-    assert.same({ hl(0, 0, -1, "CodeBlock") }, out.highlights)
+    -- The lua syntax captures on top (MDP-41) are covered by code_syntax_spec.
+    local own, syntax = {}, {}
+    for _, x in ipairs(out.highlights) do
+      table.insert(vim.startswith(x.group, "MarkdownPanel") and own or syntax, x)
+    end
+    assert.same({ hl(0, 0, -1, "CodeBlock") }, own)
+    for _, x in ipairs(syntax) do
+      assert.matches("^@.+%.lua$", x.group)
+    end
   end)
 
   it("treats ~~~ fences the same and keeps markdown in the content literal", function()

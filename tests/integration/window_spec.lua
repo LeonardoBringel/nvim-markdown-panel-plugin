@@ -126,6 +126,20 @@ describe("markdown_panel.window", function()
       })
     end)
 
+    it("gives an extmark the highlight's priority, or the default without one (MDP-41)", function()
+      local win = window.open({ "  local x" }, {
+        { row = 0, col = 0, end_col = -1, group = "MarkdownPanelCodeBlock" },
+        { row = 0, col = 2, end_col = 7, group = "@keyword.lua", priority = 4196 },
+      })
+      local marks = vim.api.nvim_buf_get_extmarks(vim.api.nvim_win_get_buf(win), ns, 0, -1, { details = true })
+      local priority = {}
+      for _, mark in ipairs(marks) do
+        priority[mark[4].hl_group] = mark[4].priority
+      end
+      -- 4096 is nvim_buf_set_extmark's default priority.
+      assert.are.same({ MarkdownPanelCodeBlock = 4096, ["@keyword.lua"] = 4196 }, priority)
+    end)
+
     it("maps q only in the preview buffer", function()
       local win = window.open({ "x" }, {})
       local map = vim.fn.maparg("q", "n", false, true)

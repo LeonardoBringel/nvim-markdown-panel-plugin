@@ -49,7 +49,13 @@ function M.open(lines, highlights)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   for _, hl in ipairs(highlights) do
     local end_col = hl.end_col == -1 and #lines[hl.row + 1] or hl.end_col
-    vim.api.nvim_buf_set_extmark(buf, ns, hl.row, hl.col, { end_col = end_col, hl_group = hl.group })
+    vim.api.nvim_buf_set_extmark(
+      buf,
+      ns,
+      hl.row,
+      hl.col,
+      { end_col = end_col, hl_group = hl.group, priority = hl.priority }
+    )
   end
   vim.bo[buf].modifiable = false
   vim.bo[buf].filetype = "markdown_panel"

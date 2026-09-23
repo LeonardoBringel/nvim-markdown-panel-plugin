@@ -7,6 +7,7 @@
 ---@field col integer       0-based byte column, inclusive
 ---@field end_col integer   byte column, exclusive; -1 = to end of line
 ---@field group string
+---@field priority integer|nil  extmark priority; nil = nvim_buf_set_extmark's default
 
 ---@class mdp.Rendered
 ---@field lines string[]
@@ -16,6 +17,7 @@
 ---@field col integer
 ---@field end_col integer
 ---@field group string
+---@field priority integer|nil
 
 ---@class mdp.Piece           one container's slice of a row prefix (quote bar, list marker)
 ---@field text string
@@ -31,6 +33,7 @@
 ---@field drop boolean|nil            row produces no output
 ---@field verbatim boolean|nil        row is emitted as source text, without inline edits
 ---@field replace {text: string, hl: mdp.LineHighlight[]}[]|nil  output lines replacing the content
+---@field content_hl mdp.LineHighlight[]|nil  extra highlights relative to the emitted content
 
 local inline = require("markdown_panel.render.inline")
 
@@ -198,7 +201,8 @@ local function emit(out, text, hl)
   out.lines[row + 1] = text
   for _, h in ipairs(hl) do
     if h.end_col == -1 or h.end_col > h.col then
-      out.highlights[#out.highlights + 1] = { row = row, col = h.col, end_col = h.end_col, group = h.group }
+      out.highlights[#out.highlights + 1] =
+        { row = row, col = h.col, end_col = h.end_col, group = h.group, priority = h.priority }
     end
   end
 end
@@ -208,7 +212,12 @@ end
 ---@param shift integer
 local function append_shifted(hl, from, shift)
   for _, h in ipairs(from) do
-    hl[#hl + 1] = { col = h.col + shift, end_col = h.end_col == -1 and -1 or h.end_col + shift, group = h.group }
+    hl[#hl + 1] = {
+      col = h.col + shift,
+      end_col = h.end_col == -1 and -1 or h.end_col + shift,
+      group = h.group,
+      priority = h.priority,
+    }
   end
 end
 
@@ -246,6 +255,7 @@ local function assemble_row(ctx, r, out)
     h.end_col = h.end_col == -1 and -1 or math.min(h.end_col, #head)
   end
   append_shifted(hl, content_hl, #head)
+  append_shifted(hl, row.content_hl or {}, #head)
   emit(out, head .. content, hl)
 end
 
