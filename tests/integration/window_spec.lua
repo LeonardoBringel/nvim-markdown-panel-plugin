@@ -193,6 +193,37 @@ describe("markdown_panel.window", function()
       assert.are.same(before, after)
     end)
 
+    it("opens with the footer at 1 / N aligned right (VIS-15)", function()
+      local cfg = vim.api.nvim_win_get_config(window.open({ "a", "b", "c" }, {}))
+      assert.are.same({ { " 1 / 3 " } }, cfg.footer)
+      assert.are.equal("right", cfg.footer_pos)
+    end)
+
+    it("shows 1 / 1 for a single-line preview (VIS-15 edge case)", function()
+      local cfg = vim.api.nvim_win_get_config(window.open({ "(empty document)" }, {}))
+      assert.are.same({ { " 1 / 1 " } }, cfg.footer)
+    end)
+
+    it("updates the footer to the cursor line on CursorMoved (VIS-16)", function()
+      local win = window.open({ "a", "b", "c" }, {})
+      local buf = vim.api.nvim_win_get_buf(win)
+      assert.are.equal(1, #vim.api.nvim_get_autocmds({ event = "CursorMoved", buffer = buf }))
+      -- Headless Neovim does not fire CursorMoved from feedkeys; fire it after moving.
+      press("G")
+      vim.api.nvim_exec_autocmds("CursorMoved", { buffer = buf })
+      assert.are.same({ { " 3 / 3 " } }, vim.api.nvim_win_get_config(win).footer)
+    end)
+
+    it("keeps the rounded border and footer_pos right after a footer update (VIS-17)", function()
+      local win = window.open({ "a", "b", "c" }, {})
+      press("G")
+      vim.api.nvim_exec_autocmds("CursorMoved", { buffer = vim.api.nvim_win_get_buf(win) })
+      local cfg = vim.api.nvim_win_get_config(win)
+      assert.are.same({ { " 3 / 3 " } }, cfg.footer)
+      assert.are.same({ "╭", "─", "╮", "│", "╯", "─", "╰", "│" }, cfg.border)
+      assert.are.equal("right", cfg.footer_pos)
+    end)
+
     it("turns highlights into extmarks in the markdown_panel namespace", function()
       local win = window.open({ "Title", "- item" }, {
         { row = 0, col = 0, end_col = -1, group = "MarkdownPanelH1" },

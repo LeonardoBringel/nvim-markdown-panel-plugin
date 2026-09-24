@@ -36,6 +36,14 @@ function M.close()
   end
 end
 
+---Line counter shown at the bottom right of the border, e.g. " 12 / 340 ".
+---@param line integer
+---@param total integer
+---@return string
+local function footer(line, total)
+  return string.format(" %d / %d ", line, total)
+end
+
 ---@param lines string[]
 ---@param highlights mdp.Highlight[]
 ---@return integer winid
@@ -68,6 +76,8 @@ function M.open(lines, highlights)
     row = dims.row,
     col = dims.col,
     border = "rounded",
+    footer = footer(1, #lines),
+    footer_pos = "right",
   })
   vim.wo[win].wrap = true
   vim.wo[win].linebreak = true
@@ -86,6 +96,15 @@ function M.open(lines, highlights)
   preview_win = win
 
   vim.keymap.set("n", "q", M.close, { buffer = buf, nowait = true, desc = "Close markdown panel" })
+  vim.api.nvim_create_autocmd("CursorMoved", {
+    buffer = buf,
+    callback = function()
+      if vim.api.nvim_win_is_valid(win) then
+        local line = vim.api.nvim_win_get_cursor(win)[1]
+        vim.api.nvim_win_set_config(win, { footer = footer(line, #lines), footer_pos = "right" })
+      end
+    end,
+  })
   vim.api.nvim_create_autocmd("WinLeave", {
     buffer = buf,
     once = true,
