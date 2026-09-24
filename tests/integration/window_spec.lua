@@ -174,7 +174,7 @@ describe("markdown_panel.window", function()
       decorate_source(origin_win)
       local win = window.open({ "x" }, {})
       local fillchars = vim.split(vim.wo[win].fillchars, ",")
-      assert.is_true(vim.tbl_contains(fillchars, "eob: "), "fillchars was: " .. vim.wo[win].fillchars)
+      assert.is_true(vim.tbl_contains(fillchars, "eob: "))
     end)
 
     it("leaves spell, list, colorcolumn, foldcolumn and fillchars of the source window unchanged after close (VIS-12)", function()
