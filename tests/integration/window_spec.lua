@@ -14,6 +14,30 @@ local function press(keys)
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "x", false)
 end
 
+---Values restored on the source window after each test.
+local source_defaults = {
+  wrap = true,
+  linebreak = false,
+  number = false,
+  relativenumber = false,
+  signcolumn = "auto",
+  winhighlight = "",
+  spell = false,
+  list = false,
+  colorcolumn = "",
+  foldcolumn = "0",
+  fillchars = "",
+}
+
+---Decorations the panel must not inherit from the source window (VIS-07..VIS-11).
+local function decorate_source(win)
+  vim.wo[win].spell = true
+  vim.wo[win].list = true
+  vim.wo[win].colorcolumn = "80"
+  vim.wo[win].foldcolumn = "2"
+  vim.wo[win].fillchars = "fold:-"
+end
+
 describe("markdown_panel.window", function()
   local origin_win, source_buf
 
@@ -34,7 +58,7 @@ describe("markdown_panel.window", function()
       vim.api.nvim_win_close(win, true)
     end
     vim.api.nvim_buf_delete(source_buf, { force = true })
-    for name, value in pairs({ wrap = true, linebreak = false, number = false, relativenumber = false, signcolumn = "auto", winhighlight = "" }) do
+    for name, value in pairs(source_defaults) do
       vim.wo[origin_win][name] = value
     end
   end)
@@ -120,6 +144,53 @@ describe("markdown_panel.window", function()
       window.open({ "x" }, {})
       window.close()
       assert.are.equal("Normal:Comment", vim.wo[origin_win].winhighlight)
+    end)
+
+    it("turns spell off when the source window has spell on (VIS-07)", function()
+      decorate_source(origin_win)
+      local win = window.open({ "x" }, {})
+      assert.is_false(vim.wo[win].spell)
+    end)
+
+    it("turns list off when the source window has list on (VIS-08)", function()
+      decorate_source(origin_win)
+      local win = window.open({ "x" }, {})
+      assert.is_false(vim.wo[win].list)
+    end)
+
+    it("clears colorcolumn when the source window has colorcolumn=80 (VIS-09)", function()
+      decorate_source(origin_win)
+      local win = window.open({ "x" }, {})
+      assert.are.equal("", vim.wo[win].colorcolumn)
+    end)
+
+    it("sets foldcolumn=0 when the source window has foldcolumn=2 (VIS-10)", function()
+      decorate_source(origin_win)
+      local win = window.open({ "x" }, {})
+      assert.are.equal("0", vim.wo[win].foldcolumn)
+    end)
+
+    it("adds eob: to fillchars when the source window already has fold:- (VIS-11)", function()
+      decorate_source(origin_win)
+      local win = window.open({ "x" }, {})
+      local fillchars = vim.split(vim.wo[win].fillchars, ",")
+      assert.is_true(vim.tbl_contains(fillchars, "eob: "), "fillchars was: " .. vim.wo[win].fillchars)
+    end)
+
+    it("leaves spell, list, colorcolumn, foldcolumn and fillchars of the source window unchanged after close (VIS-12)", function()
+      decorate_source(origin_win)
+      local names = { "spell", "list", "colorcolumn", "foldcolumn", "fillchars" }
+      local before = {}
+      for _, name in ipairs(names) do
+        before[name] = vim.wo[origin_win][name]
+      end
+      window.open({ "x" }, {})
+      window.close()
+      local after = {}
+      for _, name in ipairs(names) do
+        after[name] = vim.wo[origin_win][name]
+      end
+      assert.are.same(before, after)
     end)
 
     it("turns highlights into extmarks in the markdown_panel namespace", function()

@@ -74,6 +74,13 @@ function M.open(lines, highlights)
   vim.wo[win].number = false
   vim.wo[win].relativenumber = false
   vim.wo[win].signcolumn = "no"
+  vim.wo[win].spell = false
+  vim.wo[win].list = false
+  vim.wo[win].colorcolumn = ""
+  vim.wo[win].foldcolumn = "0"
+  vim.api.nvim_win_call(win, function()
+    vim.opt_local.fillchars:append({ eob = " " })
+  end)
   vim.wo[win].winhighlight =
     "NormalFloat:MarkdownPanelNormal,FloatBorder:MarkdownPanelBorder,FloatFooter:MarkdownPanelFooter"
   preview_win = win
