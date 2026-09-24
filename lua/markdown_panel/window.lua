@@ -68,6 +68,7 @@ function M.open(lines, highlights)
   vim.bo[buf].modifiable = false
   vim.bo[buf].filetype = "markdown_panel"
 
+  local total = vim.api.nvim_buf_line_count(buf)
   local dims = M.dimensions()
   local win = vim.api.nvim_open_win(buf, true, {
     relative = "editor",
@@ -76,7 +77,7 @@ function M.open(lines, highlights)
     row = dims.row,
     col = dims.col,
     border = "rounded",
-    footer = footer(1, #lines),
+    footer = footer(1, total),
     footer_pos = "right",
   })
   vim.wo[win].wrap = true
@@ -101,7 +102,7 @@ function M.open(lines, highlights)
     callback = function()
       if vim.api.nvim_win_is_valid(win) then
         local line = vim.api.nvim_win_get_cursor(win)[1]
-        vim.api.nvim_win_set_config(win, { footer = footer(line, #lines), footer_pos = "right" })
+        vim.api.nvim_win_set_config(win, { footer = footer(line, total), footer_pos = "right" })
       end
     end,
   })
