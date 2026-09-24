@@ -23,6 +23,9 @@ local expected_links = {
   MarkdownPanelTableBorder = "@punctuation.special",
   MarkdownPanelChecked = "@markup.list.checked",
   MarkdownPanelUnchecked = "@markup.list.unchecked",
+  MarkdownPanelNormal = "Normal",
+  MarkdownPanelBorder = "Normal",
+  MarkdownPanelFooter = "Normal",
 }
 
 describe("markdown_panel.highlights", function()
@@ -51,6 +54,25 @@ describe("markdown_panel.highlights", function()
 
     local hl = vim.api.nvim_get_hl(0, { name = "MarkdownPanelH1" })
     assert.are.equal("#ff0000", string.format("#%06x", hl.fg))
+  end)
+
+  it("keeps the user's MarkdownPanelNormal, MarkdownPanelBorder and MarkdownPanelFooter (VIS-04)", function()
+    local user = {
+      MarkdownPanelNormal = { fg = 0x111111, bg = 0x222222 },
+      MarkdownPanelBorder = { fg = 0x333333, bg = 0x444444 },
+      MarkdownPanelFooter = { fg = 0x555555, bg = 0x666666 },
+    }
+    for name, def in pairs(user) do
+      vim.api.nvim_set_hl(0, name, def)
+    end
+
+    local highlights = fresh_highlights()
+    highlights.setup()
+
+    for name, def in pairs(user) do
+      local hl = vim.api.nvim_get_hl(0, { name = name, link = true })
+      assert.are.same({ def.fg, def.bg, nil }, { hl.fg, hl.bg, hl.link }, "group " .. name .. " should keep the user's colors")
+    end
   end)
 
   it("calling setup() twice does not fail nor change the result", function()

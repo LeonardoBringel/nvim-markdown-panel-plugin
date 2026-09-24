@@ -21,6 +21,9 @@ M.groups = {
   MarkdownPanelTableBorder = { link = "@punctuation.special", default = true },
   MarkdownPanelChecked = { link = "@markup.list.checked", default = true },
   MarkdownPanelUnchecked = { link = "@markup.list.unchecked", default = true },
+  MarkdownPanelNormal = { link = "Normal", default = true },
+  MarkdownPanelBorder = { link = "Normal", default = true },
+  MarkdownPanelFooter = { link = "Normal", default = true },
 }
 
 function M.setup()
