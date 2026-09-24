@@ -36,6 +36,8 @@ In a markdown buffer:
 
 The command and the keymap are buffer-local and exist only in markdown buffers. From Lua: `require("markdown_panel").open()` and `require("markdown_panel").close()`.
 
+The footer, at the bottom-right of the border, shows the current line and the total number of lines, e.g. ` 12 / 340 `; these count lines of the rendered preview, not of the source file, since tables and other elements can add lines.
+
 ## Configuration
 
 `setup()` is optional. These are the defaults:
@@ -67,6 +69,9 @@ All groups are defined with `default = true`, so a colorscheme or your config ca
 | `MarkdownPanelTableBorder` | `@punctuation.special` |
 | `MarkdownPanelChecked` | `@markup.list.checked` |
 | `MarkdownPanelUnchecked` | `@markup.list.unchecked` |
+| `MarkdownPanelNormal` | `Normal` |
+| `MarkdownPanelBorder` | `Normal` |
+| `MarkdownPanelFooter` | `Normal` |
 
 The preview buffer has `filetype=markdown_panel`, so `FileType markdown_panel` autocmds can customize it further.
 
