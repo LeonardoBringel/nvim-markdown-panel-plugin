@@ -74,6 +74,8 @@ function M.open(lines, highlights)
   vim.wo[win].number = false
   vim.wo[win].relativenumber = false
   vim.wo[win].signcolumn = "no"
+  vim.wo[win].winhighlight =
+    "NormalFloat:MarkdownPanelNormal,FloatBorder:MarkdownPanelBorder,FloatFooter:MarkdownPanelFooter"
   preview_win = win
 
   vim.keymap.set("n", "q", M.close, { buffer = buf, nowait = true, desc = "Close markdown panel" })

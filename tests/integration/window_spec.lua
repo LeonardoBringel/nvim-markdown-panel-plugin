@@ -34,7 +34,7 @@ describe("markdown_panel.window", function()
       vim.api.nvim_win_close(win, true)
     end
     vim.api.nvim_buf_delete(source_buf, { force = true })
-    for name, value in pairs({ wrap = true, linebreak = false, number = false, relativenumber = false, signcolumn = "auto" }) do
+    for name, value in pairs({ wrap = true, linebreak = false, number = false, relativenumber = false, signcolumn = "auto", winhighlight = "" }) do
       vim.wo[origin_win][name] = value
     end
   end)
@@ -99,6 +99,27 @@ describe("markdown_panel.window", function()
       assert.is_false(vim.wo[win].number)
       assert.is_false(vim.wo[win].relativenumber)
       assert.are.equal("no", vim.wo[win].signcolumn)
+    end)
+
+    it("maps NormalFloat, FloatBorder and FloatFooter to the panel groups (VIS-03)", function()
+      local win = window.open({ "x" }, {})
+      assert.are.equal(
+        "NormalFloat:MarkdownPanelNormal,FloatBorder:MarkdownPanelBorder,FloatFooter:MarkdownPanelFooter",
+        vim.wo[win].winhighlight
+      )
+    end)
+
+    it("keeps the rounded border and has no title (VIS-05)", function()
+      local cfg = vim.api.nvim_win_get_config(window.open({ "x" }, {}))
+      assert.are.same({ "╭", "─", "╮", "│", "╯", "─", "╰", "│" }, cfg.border)
+      assert.is_nil(cfg.title)
+    end)
+
+    it("leaves the source window winhighlight unchanged after close (VIS-06)", function()
+      vim.wo[origin_win].winhighlight = "Normal:Comment"
+      window.open({ "x" }, {})
+      window.close()
+      assert.are.equal("Normal:Comment", vim.wo[origin_win].winhighlight)
     end)
 
     it("turns highlights into extmarks in the markdown_panel namespace", function()
