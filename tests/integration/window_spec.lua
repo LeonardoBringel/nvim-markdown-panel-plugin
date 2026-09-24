@@ -206,8 +206,10 @@ describe("markdown_panel.window", function()
 
     it("counts the total from the panel buffer line count (VIS-15)", function()
       -- An empty list still leaves the buffer with one line.
-      local cfg = vim.api.nvim_win_get_config(window.open({}, {}))
-      assert.are.same({ { " 1 / 1 " } }, cfg.footer)
+      local win = window.open({}, {})
+      assert.are.same({ { " 1 / 1 " } }, vim.api.nvim_win_get_config(win).footer)
+      vim.api.nvim_exec_autocmds("CursorMoved", { buffer = vim.api.nvim_win_get_buf(win) })
+      assert.are.same({ { " 1 / 1 " } }, vim.api.nvim_win_get_config(win).footer)
     end)
 
     it("updates the footer to the cursor line on CursorMoved (VIS-16)", function()
