@@ -4,7 +4,8 @@ local ftplugin = root .. "/ftplugin/markdown.lua"
 ---@return integer[]
 local function floats()
   return vim.tbl_filter(function(win)
-    return vim.api.nvim_win_get_config(win).relative ~= ""
+    local cfg = vim.api.nvim_win_get_config(win)
+    return cfg.relative ~= "" and cfg.focusable
   end, vim.api.nvim_list_wins())
 end
 
