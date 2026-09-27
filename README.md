@@ -72,6 +72,19 @@ All groups are defined with `default = true`, so a colorscheme or your config ca
 | `MarkdownPanelNormal` | `Normal` |
 | `MarkdownPanelBorder` | `Normal` |
 | `MarkdownPanelFooter` | `Normal` |
+| `MarkdownPanelBackdrop` | `bg = #000000`, `blend = 40` |
+
+While the panel is open, a backdrop dims the rest of the editor behind it, lazy.nvim-style. Its `blend` works like `winblend`: higher is lighter, and `blend = 100` turns the effect off. Defining the group without `bg` dims only the text and keeps a transparent background, useful with a transparent `Normal`:
+
+```lua
+vim.api.nvim_set_hl(0, "MarkdownPanelBackdrop", { blend = 40 })
+```
+
+To change the darkening color or intensity instead:
+
+```lua
+vim.api.nvim_set_hl(0, "MarkdownPanelBackdrop", { bg = "#000000", blend = 60 })
+```
 
 The preview buffer has `filetype=markdown_panel`, so `FileType markdown_panel` autocmds can customize it further.
 
