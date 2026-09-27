@@ -29,6 +29,7 @@ local source_defaults = {
   linebreak = false,
   number = false,
   relativenumber = false,
+  cursorline = false,
   signcolumn = "auto",
   winhighlight = "",
   spell = false,
@@ -442,6 +443,16 @@ describe("markdown_panel.window", function()
       assert.are.equal("nofile", vim.bo[buf].buftype)
       assert.are.equal("wipe", vim.bo[buf].bufhidden)
       assert.are.equal("markdown_panel_backdrop", vim.bo[buf].filetype)
+    end)
+
+    it("does not inherit number, cursorline or eob from the origin window (BKD-13)", function()
+      vim.wo[origin_win].number = true
+      vim.wo[origin_win].cursorline = true
+      window.open({ "x" }, {})
+      local bd = backdrops()[1]
+      assert.is_false(vim.wo[bd].number)
+      assert.is_false(vim.wo[bd].cursorline)
+      assert.is_true(vim.tbl_contains(vim.split(vim.wo[bd].fillchars, ","), "eob: "))
     end)
 
     it("closes the backdrop and wipes its buffer when q closes the panel (BKD-07)", function()
