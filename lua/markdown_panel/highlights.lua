@@ -24,6 +24,7 @@ M.groups = {
   MarkdownPanelNormal = { link = "Normal", default = true },
   MarkdownPanelBorder = { link = "Normal", default = true },
   MarkdownPanelFooter = { link = "Normal", default = true },
+  MarkdownPanelBackdrop = { bg = "#000000", blend = 40, default = true },
 }
 
 function M.setup()

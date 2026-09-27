@@ -33,6 +33,7 @@ describe("markdown_panel.highlights", function()
     for name, _ in pairs(expected_links) do
       pcall(vim.api.nvim_set_hl, 0, name, {})
     end
+    pcall(vim.api.nvim_set_hl, 0, "MarkdownPanelBackdrop", {})
   end)
 
   it("defines every design-listed MarkdownPanel* group with default = true after setup()", function()
@@ -73,6 +74,27 @@ describe("markdown_panel.highlights", function()
       local hl = vim.api.nvim_get_hl(0, { name = name, link = true })
       assert.are.same({ def.fg, def.bg, nil }, { hl.fg, hl.bg, hl.link }, "group " .. name .. " should keep the user's colors")
     end
+  end)
+
+  it("defines MarkdownPanelBackdrop with bg, blend and default = true after setup()", function()
+    local highlights = fresh_highlights()
+    highlights.setup()
+
+    local hl = vim.api.nvim_get_hl(0, { name = "MarkdownPanelBackdrop" })
+    assert.are.equal(0x000000, hl.bg)
+    assert.are.equal(40, hl.blend)
+    assert.are.equal(true, hl.default)
+  end)
+
+  it("does not overwrite a MarkdownPanelBackdrop the user defined before setup()", function()
+    vim.api.nvim_set_hl(0, "MarkdownPanelBackdrop", { bg = 0x112233, blend = 70 })
+
+    local highlights = fresh_highlights()
+    highlights.setup()
+
+    local hl = vim.api.nvim_get_hl(0, { name = "MarkdownPanelBackdrop" })
+    assert.are.equal(0x112233, hl.bg)
+    assert.are.equal(70, hl.blend)
   end)
 
   it("calling setup() twice does not fail nor change the result", function()
