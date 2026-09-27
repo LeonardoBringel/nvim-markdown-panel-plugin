@@ -5,6 +5,9 @@ local ns = vim.api.nvim_create_namespace("markdown_panel")
 ---@type integer|nil
 local preview_win
 
+---@type integer|nil
+local backdrop_win
+
 ---80% of the editor area, centered. The border adds one cell on each side,
 ---so the outer box (size + 2) is what gets centered.
 ---@return { width: integer, height: integer, row: integer, col: integer }
@@ -26,6 +29,38 @@ function M.is_open()
   return preview_win ~= nil and vim.api.nvim_win_is_valid(preview_win)
 end
 
+local function close_backdrop()
+  local win = backdrop_win
+  backdrop_win = nil
+  if win and vim.api.nvim_win_is_valid(win) then
+    vim.api.nvim_win_close(win, true)
+  end
+end
+
+---Empty float that covers the editor just below the panel; its blended
+---MarkdownPanelBackdrop background dims everything behind the panel.
+---Opened without entering it, so the origin stays the previous window.
+---@return integer winid
+local function open_backdrop()
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].buftype = "nofile"
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].filetype = "markdown_panel_backdrop"
+  local win = vim.api.nvim_open_win(buf, false, {
+    relative = "editor",
+    row = 0,
+    col = 0,
+    width = vim.o.columns,
+    height = vim.o.lines,
+    style = "minimal",
+    focusable = false,
+    zindex = 49,
+  })
+  vim.wo[win].winhighlight = "Normal:MarkdownPanelBackdrop"
+  vim.wo[win].winblend = 40
+  return win
+end
+
 ---Closing the focused float returns Neovim to the previous window, which is
 ---the window the preview was opened from.
 function M.close()
@@ -34,6 +69,7 @@ function M.close()
   if win and vim.api.nvim_win_is_valid(win) then
     vim.api.nvim_win_close(win, true)
   end
+  close_backdrop()
 end
 
 ---Line counter shown at the bottom right of the border, e.g. " 12 / 340 ".
@@ -70,6 +106,7 @@ function M.open(lines, highlights)
 
   local total = vim.api.nvim_buf_line_count(buf)
   local dims = M.dimensions()
+  backdrop_win = open_backdrop()
   local win = vim.api.nvim_open_win(buf, true, {
     relative = "editor",
     width = dims.width,
@@ -111,6 +148,14 @@ function M.open(lines, highlights)
     once = true,
     callback = function()
       M.close()
+    end,
+  })
+  -- The panel can also be closed outside the plugin (:close, nvim_win_close).
+  vim.api.nvim_create_autocmd("WinClosed", {
+    pattern = tostring(win),
+    once = true,
+    callback = function()
+      close_backdrop()
     end,
   })
 

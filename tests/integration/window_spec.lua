@@ -10,6 +10,14 @@ local function floats()
   end, vim.api.nvim_list_wins())
 end
 
+---Windows showing a backdrop buffer, found by its filetype.
+---@return integer[]
+local function backdrops()
+  return vim.tbl_filter(function(win)
+    return vim.bo[vim.api.nvim_win_get_buf(win)].filetype == "markdown_panel_backdrop"
+  end, vim.api.nvim_list_wins())
+end
+
 ---@param keys string
 local function press(keys)
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "x", false)
@@ -388,6 +396,94 @@ describe("markdown_panel.window", function()
         window.close()
       end)
       assert.is_false(window.is_open())
+    end)
+  end)
+
+  describe("backdrop", function()
+    after_each(function()
+      for _, win in ipairs(backdrops()) do
+        vim.api.nvim_win_close(win, true)
+      end
+    end)
+
+    it("opens an editor-sized, non-focusable float at zindex 49 below the panel's 50 (BKD-03)", function()
+      local win = window.open({ "x" }, {})
+      local found = backdrops()
+      assert.are.equal(1, #found)
+      local cfg = vim.api.nvim_win_get_config(found[1])
+      assert.are.equal("editor", cfg.relative)
+      assert.are.equal(0, cfg.row)
+      assert.are.equal(0, cfg.col)
+      assert.are.equal(100, cfg.width)
+      assert.are.equal(40, cfg.height)
+      assert.is_false(cfg.focusable)
+      assert.are.equal(49, cfg.zindex)
+      assert.are.equal(50, vim.api.nvim_win_get_config(win).zindex)
+    end)
+
+    it("maps Normal to MarkdownPanelBackdrop with winblend 40 (BKD-04)", function()
+      window.open({ "x" }, {})
+      local bd = backdrops()[1]
+      assert.are.equal("Normal:MarkdownPanelBackdrop", vim.wo[bd].winhighlight)
+      assert.are.equal(40, vim.wo[bd].winblend)
+    end)
+
+    it("leaves the panel, not the backdrop, as the current window (BKD-05)", function()
+      local win = window.open({ "x" }, {})
+      local found = backdrops()
+      assert.are.equal(1, #found)
+      assert.are.equal(win, vim.api.nvim_get_current_win())
+      assert.are_not.equal(found[1], vim.api.nvim_get_current_win())
+    end)
+
+    it("uses a nofile, wipe buffer with filetype markdown_panel_backdrop (BKD-06)", function()
+      window.open({ "x" }, {})
+      local buf = vim.api.nvim_win_get_buf(backdrops()[1])
+      assert.are.equal("nofile", vim.bo[buf].buftype)
+      assert.are.equal("wipe", vim.bo[buf].bufhidden)
+      assert.are.equal("markdown_panel_backdrop", vim.bo[buf].filetype)
+    end)
+
+    it("closes the backdrop and wipes its buffer when q closes the panel (BKD-07)", function()
+      window.open({ "x" }, {})
+      local bd = backdrops()[1]
+      local buf = vim.api.nvim_win_get_buf(bd)
+      press("q")
+      assert.is_false(vim.api.nvim_win_is_valid(bd))
+      assert.is_false(vim.api.nvim_buf_is_valid(buf))
+    end)
+
+    it("closes the backdrop and wipes its buffer when focus leaves the panel (BKD-07)", function()
+      window.open({ "x" }, {})
+      local bd = backdrops()[1]
+      local buf = vim.api.nvim_win_get_buf(bd)
+      vim.cmd.wincmd("p")
+      assert.is_false(vim.api.nvim_win_is_valid(bd))
+      assert.is_false(vim.api.nvim_buf_is_valid(buf))
+    end)
+
+    it("closes the backdrop when the panel is closed with :close (BKD-08)", function()
+      window.open({ "x" }, {})
+      local bd = backdrops()[1]
+      assert.is_true(vim.api.nvim_win_is_valid(bd))
+      vim.cmd("close")
+      assert.is_false(vim.api.nvim_win_is_valid(bd))
+    end)
+
+    it("closes the backdrop when the panel is closed with nvim_win_close from another window (BKD-08)", function()
+      local win = window.open({ "x" }, {})
+      local bd = backdrops()[1]
+      vim.cmd("noautocmd wincmd p")
+      vim.api.nvim_win_close(win, true)
+      assert.is_false(vim.api.nvim_win_is_valid(bd))
+    end)
+
+    it("keeps exactly one backdrop when the panel is opened twice (BKD-09)", function()
+      window.open({ "one" }, {})
+      local first = backdrops()[1]
+      window.open({ "two" }, {})
+      assert.are.equal(1, #backdrops())
+      assert.is_false(vim.api.nvim_win_is_valid(first))
     end)
   end)
 end)
