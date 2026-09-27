@@ -29,7 +29,10 @@ function M.is_open()
   return preview_win ~= nil and vim.api.nvim_win_is_valid(preview_win)
 end
 
+local backdrop_group = "markdown_panel_backdrop"
+
 local function close_backdrop()
+  vim.api.nvim_create_augroup(backdrop_group, { clear = true })
   local win = backdrop_win
   backdrop_win = nil
   if win and vim.api.nvim_win_is_valid(win) then
@@ -58,6 +61,20 @@ local function open_backdrop()
   })
   vim.wo[win].winhighlight = "Normal:MarkdownPanelBackdrop"
   vim.wo[win].winblend = 40
+  vim.api.nvim_create_autocmd("VimResized", {
+    group = vim.api.nvim_create_augroup(backdrop_group, { clear = true }),
+    callback = function()
+      if vim.api.nvim_win_is_valid(win) then
+        vim.api.nvim_win_set_config(win, {
+          relative = "editor",
+          row = 0,
+          col = 0,
+          width = vim.o.columns,
+          height = vim.o.lines,
+        })
+      end
+    end,
+  })
   return win
 end
 

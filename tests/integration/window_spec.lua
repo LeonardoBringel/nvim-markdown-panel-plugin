@@ -485,5 +485,24 @@ describe("markdown_panel.window", function()
       assert.are.equal(1, #backdrops())
       assert.is_false(vim.api.nvim_win_is_valid(first))
     end)
+
+    it("resizes to the new columns and lines on VimResized (BKD-10)", function()
+      window.open({ "x" }, {})
+      local bd = backdrops()[1]
+      vim.o.columns = 120
+      vim.o.lines = 50
+      vim.api.nvim_exec_autocmds("VimResized", {})
+      local cfg = vim.api.nvim_win_get_config(bd)
+      assert.are.equal(120, cfg.width)
+      assert.are.equal(50, cfg.height)
+    end)
+
+    it("leaves no VimResized autocmd after the panel closes (BKD-11)", function()
+      window.open({ "x" }, {})
+      local query = { event = "VimResized", group = "markdown_panel_backdrop" }
+      assert.are.equal(1, #vim.api.nvim_get_autocmds(query))
+      window.close()
+      assert.are.same({}, vim.api.nvim_get_autocmds(query))
+    end)
   end)
 end)
