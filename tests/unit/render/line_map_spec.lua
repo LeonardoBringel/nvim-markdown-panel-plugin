@@ -32,6 +32,10 @@ describe("render line_map", function()
     assert.same({ 1, 1, 1 }, line_map({ "```lua", "print(1)", "```" }))
   end)
 
+  it("maps a closing fence at end of file to the last of several preview lines (CUR-03)", function()
+    assert.same({ 1, 2, 3, 3, 3 }, line_map({ "a", "", "```lua", "print(1)", "```" }))
+  end)
+
   it("maps every line to 1 when the render produces no lines (CUR-03)", function()
     local rendered, err = render.render({ "---", "a: 1", "---" }, { width = 40 })
     assert(rendered, err)
