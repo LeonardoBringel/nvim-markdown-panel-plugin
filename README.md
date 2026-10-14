@@ -36,6 +36,8 @@ In a markdown buffer:
 
 The command and the keymap are buffer-local and exist only in markdown buffers. From Lua: `require("markdown_panel").open()` and `require("markdown_panel").close()`.
 
+The preview opens centered on the line that matches the cursor line in the source. A source line with no output of its own (a code fence, the frontmatter, a setext underline) opens at the next rendered line.
+
 The footer, at the bottom-right of the border, shows the current line and the total number of lines, e.g. ` 12 / 340 `; these count lines of the rendered preview, not of the source file, since tables and other elements can add lines.
 
 ## Configuration
