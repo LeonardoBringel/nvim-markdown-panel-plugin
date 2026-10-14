@@ -169,6 +169,47 @@ describe("markdown_panel.open()", function()
     assert.are.equal(source, vim.api.nvim_get_current_buf())
   end)
 
+  describe("cursor line", function()
+    ---@param row integer
+    ---@return integer[] cursor, any footer
+    local function open_at(row)
+      vim.api.nvim_win_set_cursor(0, { row, 0 })
+      panel.open()
+      local win = floats()[1]
+      return vim.api.nvim_win_get_cursor(win), vim.api.nvim_win_get_config(win).footer
+    end
+
+    it("opens at the preview line mapped from the source cursor line (CUR-13)", function()
+      -- Expected line_map (CUR-04): { 1, 1, 1, 1, 2, 3 }.
+      scratch({ "---", "a: 1", "---", "# T", "", "x" }, "markdown")
+      assert.are.same({ 1, 0 }, (open_at(3)))
+      panel.close()
+      assert.are.same({ 3, 0 }, (open_at(6)))
+    end)
+
+    it("shifts the target by the lines a table adds above it (CUR-14)", function()
+      scratch({ "| a |", "|---|", "| b |", "", "x" }, "markdown")
+      local cursor, footer = open_at(5)
+      assert.are.same({ 7, 0 }, cursor)
+      assert.are.same({ { " 7 / 7 " } }, footer)
+    end)
+
+    it("opens on line 1 for a blank document (CUR-15)", function()
+      scratch({ "", "  " }, "markdown")
+      assert.are.same({ 1, 0 }, (open_at(2)))
+    end)
+
+    it("opens on line 1 when the buffer is not shown in the current window (CUR-16)", function()
+      local other = scratch({ "a", "b", "c" }, "markdown")
+      scratch({ "x", "y", "z" }, "markdown")
+      vim.api.nvim_win_set_cursor(0, { 3, 0 })
+
+      panel.open(other)
+
+      assert.are.same({ 1, 0 }, vim.api.nvim_win_get_cursor(floats()[1]))
+    end)
+  end)
+
   it("setup() forwards options to the config module", function()
     panel.setup({ keymap = "<leader>x" })
     assert.are.equal("<leader>x", require("markdown_panel.config").get().keymap)

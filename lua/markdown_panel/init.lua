@@ -33,8 +33,14 @@ function M.open(bufnr)
     rendered = { lines = { "(empty document)" }, highlights = {}, line_map = {} }
   end
 
+  -- Only the current window has a cursor that belongs to bufnr (CUR-16).
+  local line = 1
+  if not blank and vim.api.nvim_win_get_buf(0) == bufnr then
+    line = rendered.line_map[vim.api.nvim_win_get_cursor(0)[1]]
+  end
+
   require("markdown_panel.highlights").setup()
-  window.open(rendered.lines, rendered.highlights)
+  window.open(rendered.lines, rendered.highlights, line)
 end
 
 function M.close()
