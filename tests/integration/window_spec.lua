@@ -314,6 +314,63 @@ describe("markdown_panel.window", function()
     end)
   end)
 
+  describe("open() at a line", function()
+    ---@param n integer
+    ---@return string[]
+    local function numbered(n)
+      local lines = {}
+      for i = 1, n do
+        lines[i] = "line " .. i
+      end
+      return lines
+    end
+
+    ---Sets the editor size so the panel is `height` rows tall.
+    ---@param lines integer
+    ---@param height integer
+    local function panel_height(lines, height)
+      vim.o.lines = lines
+      vim.o.cmdheight = 1
+      assert.are.equal(height, window.dimensions().height)
+    end
+
+    it("puts the cursor on the given line, column 0 (CUR-08)", function()
+      local win = window.open(numbered(100), {}, 50)
+      assert.are.same({ 50, 0 }, vim.api.nvim_win_get_cursor(win))
+    end)
+
+    it("centers the line like zz with an even and an odd height (CUR-09)", function()
+      panel_height(14, 10)
+      assert.are.equal(46, vim.fn.line("w0", window.open(numbered(100), {}, 50)))
+      panel_height(15, 11)
+      assert.are.equal(45, vim.fn.line("w0", window.open(numbered(100), {}, 50)))
+    end)
+
+    it("keeps the first line at the top when the target is in the upper half (CUR-10)", function()
+      panel_height(14, 10)
+      local win = window.open(numbered(100), {}, 3)
+      assert.are.equal(1, vim.fn.line("w0", win))
+      assert.are.same({ 3, 0 }, vim.api.nvim_win_get_cursor(win))
+    end)
+
+    it("centers the last line, leaving empty space below it (CUR-09 edge case)", function()
+      panel_height(14, 10)
+      assert.are.equal(100 - 5 + 1, vim.fn.line("w0", window.open(numbered(100), {}, 100)))
+    end)
+
+    it("shows the given line in the footer before any cursor movement (CUR-11)", function()
+      local cfg = vim.api.nvim_win_get_config(window.open(numbered(100), {}, 50))
+      assert.are.same({ { " 50 / 100 " } }, cfg.footer)
+    end)
+
+    it("opens on line 1 with footer 1 / N when no line is given (CUR-12)", function()
+      local win = window.open(numbered(100), {})
+      assert.are.same({ 1, 0 }, vim.api.nvim_win_get_cursor(win))
+      assert.are.equal(1, vim.fn.line("w0", win))
+      assert.are.same({ { " 1 / 100 " } }, vim.api.nvim_win_get_config(win).footer)
+    end)
+  end)
+
   describe("closing", function()
     it("q closes the float and returns focus to the origin window (MDP-08)", function()
       window.open({ "x" }, {})

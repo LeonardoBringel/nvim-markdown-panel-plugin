@@ -99,9 +99,11 @@ end
 
 ---@param lines string[]
 ---@param highlights mdp.Highlight[]
+---@param line integer|nil  1-based line to open at, centered; nil = 1
 ---@return integer winid
-function M.open(lines, highlights)
+function M.open(lines, highlights, line)
   M.close()
+  line = line or 1
 
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].buftype = "nofile"
@@ -131,7 +133,7 @@ function M.open(lines, highlights)
     row = dims.row,
     col = dims.col,
     border = "rounded",
-    footer = footer(1, total),
+    footer = footer(line, total),
     footer_pos = "right",
   })
   vim.wo[win].wrap = true
@@ -143,8 +145,10 @@ function M.open(lines, highlights)
   vim.wo[win].list = false
   vim.wo[win].colorcolumn = ""
   vim.wo[win].foldcolumn = "0"
+  vim.api.nvim_win_set_cursor(win, { line, 0 })
   vim.api.nvim_win_call(win, function()
     vim.opt_local.fillchars:append({ eob = " " })
+    vim.cmd("normal! zz")
   end)
   vim.wo[win].winhighlight =
     "NormalFloat:MarkdownPanelNormal,FloatBorder:MarkdownPanelBorder,FloatFooter:MarkdownPanelFooter"
@@ -155,8 +159,8 @@ function M.open(lines, highlights)
     buffer = buf,
     callback = function()
       if vim.api.nvim_win_is_valid(win) then
-        local line = vim.api.nvim_win_get_cursor(win)[1]
-        vim.api.nvim_win_set_config(win, { footer = footer(line, total), footer_pos = "right" })
+        local cur = vim.api.nvim_win_get_cursor(win)[1]
+        vim.api.nvim_win_set_config(win, { footer = footer(cur, total), footer_pos = "right" })
       end
     end,
   })
