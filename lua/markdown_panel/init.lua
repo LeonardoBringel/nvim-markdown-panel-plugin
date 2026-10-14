@@ -30,7 +30,7 @@ function M.open(bufnr)
     return not line:find("%S")
   end)
   if blank then
-    rendered = { lines = { "(empty document)" }, highlights = {} }
+    rendered = { lines = { "(empty document)" }, highlights = {}, line_map = {} }
   end
 
   require("markdown_panel.highlights").setup()

@@ -12,6 +12,7 @@
 ---@class mdp.Rendered
 ---@field lines string[]
 ---@field highlights mdp.Highlight[]
+---@field line_map integer[]  1-based source line -> 1-based preview line where its output starts
 
 ---@class mdp.LineHighlight   a highlight relative to a piece of text, without row
 ---@field col integer
@@ -295,9 +296,20 @@ function M.render(lines, opts)
   ctx:walk(root)
 
   ---@type mdp.Rendered
-  local out = { lines = {}, highlights = {} }
+  local out = { lines = {}, highlights = {}, line_map = {} }
+  ---@type (integer|false)[]
+  local starts = {}
   for r = 0, #lines - 1 do
+    local first = #out.lines + 1
     assemble_row(ctx, r, out)
+    starts[r + 1] = #out.lines >= first and first
+  end
+  -- A line without output points at the next line that has some, or at the
+  -- last preview line when none follows (CUR-02, CUR-03).
+  local next_line = math.max(#out.lines, 1)
+  for s = #lines, 1, -1 do
+    next_line = starts[s] or next_line
+    out.line_map[s] = next_line
   end
   return out
 end
